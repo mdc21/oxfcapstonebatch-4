@@ -96,7 +96,7 @@ def fetch_data_from_supabase(table_name: str, filters: Optional[Dict[str, Any]] 
                 print(f"Filtering by skill_category: {value}")
             else:
                 query = query.eq(key, value)
-    
+    print(f"Supabase query: {query}")
     result = query.execute()
     print(f"Supabase query result: {result}")
     if result.error:
