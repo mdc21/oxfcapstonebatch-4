@@ -2,8 +2,9 @@ from typing import Optional
 
 from fastapi import FastAPI
 
-app = FastAPI()
+# app = FastAPI()
 
+app = FastAPI(title="Process Mining API with OpenAI O3")
 
 @app.get("/")
 async def root():
@@ -41,7 +42,6 @@ supabase: Client = create_client(supabase_url, supabase_key)
 # Initialize OpenAI client
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-app = FastAPI(title="Process Mining API with OpenAI O3")
 
 # Configure CORS - updated to include the Lovable.dev URL
 app.add_middleware(
