@@ -110,10 +110,21 @@ def fetch_data_from_supabase(table_name: str, filters: Optional[Dict[str, Any]] 
         raise HTTPException(status_code=500, detail=f"Supabase error: {result.error}")
     if result.status_code != 200:
         raise HTTPException(status_code=result.status_code, detail=f"Supabase error: {result.error}")
-    if result.data:
-        return result.data
-    else:
-        return []
+    #  return result.data
+    # Check if data is empty
+    if not result.data:
+        raise HTTPException(status_code=404, detail="No data found")
+    # Convert to DataFrame
+    df = pd.DataFrame(result.data)
+    print(f"DataFrame: {df.head()}")
+    return result.data
+    # Check if data is empty
+    # if df.empty:
+    #     raise HTTPException(status_code=404, detail="No data found")
+    # if result.da ta:
+    #     return result.data
+    # else:
+    #     return []
 
 # Function to convert SQL results to formatted JSON for OpenAI
 def format_data_for_openai(data: List[Dict[str, Any]], query_type: str) -> Dict[str, Any]:
