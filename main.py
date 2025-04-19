@@ -104,20 +104,23 @@ def fetch_data_from_supabase(table_name: str, filters: Optional[Dict[str, Any]] 
     else:
         print("No filters applied.")
     print(f"Supabase query: {query}")
-    result = query.execute()
-    print(f"Supabase query result: {result}")
-    if result.error:
-        raise HTTPException(status_code=500, detail=f"Supabase error: {result.error}")
-    if result.status_code != 200:
-        raise HTTPException(status_code=result.status_code, detail=f"Supabase error: {result.error}")
+    # Execute the query
+    # enclose in try except block
+    try:
+        result = query.execute()
+        print(f"Supabase query result: {result}")
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching data: {str(e)}")
     #  return result.data
     # Check if data is empty
     if not result.data:
         raise HTTPException(status_code=404, detail="No data found")
     # Convert to DataFrame
-    df = pd.DataFrame(result.data)
-    print(f"DataFrame: {df.head()}")
-    return result.data
+    # df = pd.DataFrame(result.data)
+    # print(f"DataFrame: {df.head()}")
+    response = result.data
+    return response
     # Check if data is empty
     # if df.empty:
     #     raise HTTPException(status_code=404, detail="No data found")
@@ -130,6 +133,7 @@ def fetch_data_from_supabase(table_name: str, filters: Optional[Dict[str, Any]] 
 def format_data_for_openai(data: List[Dict[str, Any]], query_type: str) -> Dict[str, Any]:
     if query_type == "process_mining":
         # Format specifically for process mining analysis
+        print(f"Raw data for process mining: {data}")
         events_df = pd.DataFrame(data)
         print(f"Events DataFrame: {events_df.head()}")
         # Ensure timestamp is properly formatted
@@ -392,7 +396,7 @@ def get_high_risk_roles():
  
 @app.get("/training-effectiveness")
 def get_training_effectiveness():
-    data = supabase.from_('workforce_reskilling_cases').select("training_program, certification_earned").execute()
+    data = supabase.from_('workforce_reskilling_cases').select("*").execute()
     # print data
     print(f"Training effectiveness data: {data}")
     # Check if data is empty
