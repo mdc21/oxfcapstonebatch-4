@@ -98,7 +98,11 @@ def fetch_data_from_supabase(table_name: str, filters: Optional[Dict[str, Any]] 
                 query = query.eq(key, value)
     
     result = query.execute()
-    
+    print(f"Supabase query result: {result}")
+    if result.error:
+        raise HTTPException(status_code=500, detail=f"Supabase error: {result.error}")
+    if result.status_code != 200:
+        raise HTTPException(status_code=result.status_code, detail=f"Supabase error: {result.error}")
     if result.data:
         return result.data
     else:
@@ -109,24 +113,26 @@ def format_data_for_openai(data: List[Dict[str, Any]], query_type: str) -> Dict[
     if query_type == "process_mining":
         # Format specifically for process mining analysis
         events_df = pd.DataFrame(data)
-        
+        print(f"Events DataFrame: {events_df.head()}")
         # Ensure timestamp is properly formatted
         if 'timestamp' in events_df.columns:
             events_df['timestamp'] = pd.to_datetime(events_df['timestamp'])
             events_df = events_df.sort_values('timestamp')
-        
+        print(f"Sorted Events DataFrame: {events_df.head()}")
         # Group by case_id to create process instances
         process_instances = {}
         for case_id, group in events_df.groupby('case_id'):
             process_instances[str(case_id)] = group.to_dict(orient='records')
         
-        return {
-            "process_data": {
-                "instances": process_instances,
-                "event_count": len(data),
-                "case_count": len(process_instances)
-            }
+        # Create a summary of the process instances
+        process_summary = {
+            "process_instances": process_instances,
+            "event_count": len(events_df),
+            "case_count": len(process_instances)
         }
+        print(f"Process Summary: {process_summary}")
+        return process_summary
+        
     
     elif query_type == "knowledge_graph":
         # Format for knowledge graph analysis
