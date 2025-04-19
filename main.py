@@ -96,7 +96,14 @@ def fetch_data_from_supabase(table_name: str, filters: Optional[Dict[str, Any]] 
                 print(f"Filtering by skill_category: {value}")
             else:
                 query = query.eq(key, value)
-    print(f"Supabase query: {query.url}")
+    # print query table name , key and value for debugging
+    print(f"Fetching data from table: {table_name}")
+    if filters:
+        for key, value in filters.items():
+            print(f"Filter - {key}: {value}")
+    else:
+        print("No filters applied.")
+    print(f"Supabase query: {query}")
     result = query.execute()
     print(f"Supabase query result: {result}")
     if result.error:
@@ -375,4 +382,15 @@ def get_high_risk_roles():
 @app.get("/training-effectiveness")
 def get_training_effectiveness():
     data = supabase.from_('workforce_reskilling_cases').select("training_program, certification_earned").execute()
+    # print data
+    print(f"Training effectiveness data: {data}")
+    # Check if data is empty
+    if not data.data:
+        return {"message": "No data found"}
+    # Convert to DataFrame
+    df = pd.DataFrame(data.data)
+    # Calculate effectiveness
+    effectiveness = df.groupby('training_program')['certification_earned'].mean().reset_index()
+    effectiveness['certification_earned'] = effectiveness['certification_earned'].apply(lambda x: "Success" if x else "Failure")
+    # Convert back to list of dictionaries  
     return data.data
