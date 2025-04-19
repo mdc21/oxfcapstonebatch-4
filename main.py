@@ -90,42 +90,67 @@ def fetch_data_from_supabase(table_name: str, filters: Optional[Dict[str, Any]] 
                     query = query.eq("certification_earned", True)
                 elif value == "failure":
                     query = query.eq("certification_earned", False)
-            elif key == "training_program":
+            elif key == "skill_category":
                 # query = query.eq("training_program", value)
                 query = query.eq("skill_category", value)
+                print(f"Filtering by skill_category: {value}")
             else:
                 query = query.eq(key, value)
-    
-    result = query.execute()
-    
-    if result.data:
-        return result.data
+    # print query table name , key and value for debugging
+    print(f"Fetching data from table: {table_name}")
+    if filters:
+        for key, value in filters.items():
+            print(f"Filter - {key}: {value}")
     else:
-        return []
+        print("No filters applied.")
+    print(f"Supabase query: {query}")
+    result = query.execute()
+    print(f"Supabase query result: {result}")
+    if result.error:
+        raise HTTPException(status_code=500, detail=f"Supabase error: {result.error}")
+    if result.status_code != 200:
+        raise HTTPException(status_code=result.status_code, detail=f"Supabase error: {result.error}")
+    #  return result.data
+    # Check if data is empty
+    if not result.data:
+        raise HTTPException(status_code=404, detail="No data found")
+    # Convert to DataFrame
+    df = pd.DataFrame(result.data)
+    print(f"DataFrame: {df.head()}")
+    return result.data
+    # Check if data is empty
+    # if df.empty:
+    #     raise HTTPException(status_code=404, detail="No data found")
+    # if result.da ta:
+    #     return result.data
+    # else:
+    #     return []
 
 # Function to convert SQL results to formatted JSON for OpenAI
 def format_data_for_openai(data: List[Dict[str, Any]], query_type: str) -> Dict[str, Any]:
     if query_type == "process_mining":
         # Format specifically for process mining analysis
         events_df = pd.DataFrame(data)
-        
+        print(f"Events DataFrame: {events_df.head()}")
         # Ensure timestamp is properly formatted
         if 'timestamp' in events_df.columns:
             events_df['timestamp'] = pd.to_datetime(events_df['timestamp'])
             events_df = events_df.sort_values('timestamp')
-        
+        print(f"Sorted Events DataFrame: {events_df.head()}")
         # Group by case_id to create process instances
         process_instances = {}
         for case_id, group in events_df.groupby('case_id'):
             process_instances[str(case_id)] = group.to_dict(orient='records')
         
-        return {
-            "process_data": {
-                "instances": process_instances,
-                "event_count": len(data),
-                "case_count": len(process_instances)
-            }
+        # Create a summary of the process instances
+        process_summary = {
+            "process_instances": process_instances,
+            "event_count": len(events_df),
+            "case_count": len(process_instances)
         }
+        print(f"Process Summary: {process_summary}")
+        return process_summary
+        
     
     elif query_type == "knowledge_graph":
         # Format for knowledge graph analysis
@@ -360,3 +385,23 @@ async def health_check():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+@app.get("/high-risk-roles")
+def get_high_risk_roles():
+    data = supabase.from_('job_risk').select("job_title, automation_probability").gt("automation_probability", 0.7).execute()
+    return data.data
+ 
+@app.get("/training-effectiveness")
+def get_training_effectiveness():
+    data = supabase.from_('workforce_reskilling_cases').select("training_program, certification_earned").execute()
+    # print data
+    print(f"Training effectiveness data: {data}")
+    # Check if data is empty
+    if not data.data:
+        return {"message": "No data found"}
+    # Convert to DataFrame
+    df = pd.DataFrame(data.data)
+    # Calculate effectiveness
+    effectiveness = df.groupby('training_program')['certification_earned'].mean().reset_index()
+    effectiveness['certification_earned'] = effectiveness['certification_earned'].apply(lambda x: "Success" if x else "Failure")
+    # Convert back to list of dictionaries  
+    return data.data
