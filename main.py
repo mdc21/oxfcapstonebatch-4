@@ -91,7 +91,8 @@ def fetch_data_from_supabase(table_name: str, filters: Optional[Dict[str, Any]] 
                 elif value == "failure":
                     query = query.eq("certification_earned", False)
             elif key == "training_program":
-                query = query.eq("training_program", value)
+                # query = query.eq("training_program", value)
+                query = query.eq("skill_category", value)
             else:
                 query = query.eq(key, value)
     
