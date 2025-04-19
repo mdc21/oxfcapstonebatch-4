@@ -96,7 +96,7 @@ def fetch_data_from_supabase(table_name: str, filters: Optional[Dict[str, Any]] 
                 print(f"Filtering by skill_category: {value}")
             else:
                 query = query.eq(key, value)
-    print(f"Supabase query: {query}")
+    print(f"Supabase query: {query.url}")
     result = query.execute()
     print(f"Supabase query result: {result}")
     if result.error:
@@ -367,3 +367,12 @@ async def health_check():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+@app.get("/high-risk-roles")
+def get_high_risk_roles():
+    data = supabase.from_('job_risk').select("job_title, automation_probability").gt("automation_probability", 0.7).execute()
+    return data.data
+ 
+@app.get("/training-effectiveness")
+def get_training_effectiveness():
+    data = supabase.from_('workforce_reskilling_cases').select("training_program, certification_earned").execute()
+    return data.data
