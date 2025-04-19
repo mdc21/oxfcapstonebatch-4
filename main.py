@@ -90,9 +90,10 @@ def fetch_data_from_supabase(table_name: str, filters: Optional[Dict[str, Any]] 
                     query = query.eq("certification_earned", True)
                 elif value == "failure":
                     query = query.eq("certification_earned", False)
-            elif key == "training_program":
+            elif key == "skill_category":
                 # query = query.eq("training_program", value)
                 query = query.eq("skill_category", value)
+                print(f"Filtering by skill_category: {value}")
             else:
                 query = query.eq(key, value)
     
