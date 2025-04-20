@@ -6,13 +6,16 @@ from fastapi import FastAPI
 
 app = FastAPI(title="Process Mining API with OpenAI O3")
 
+
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
 
+
 @app.get("/items/{item_id}")
 def read_item(item_id: int, q: Optional[str] = None):
     return {"item_id": item_id, "q": q}
+
 
 # main.py - FastAPI Backend for Process Mining with OpenAI O3
 
@@ -386,6 +389,9 @@ async def reasoning_query(request: ReasoningRequest):
 async def health_check():
     return {"status": "healthy", "version": "1.0.0"}
 
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 @app.get("/high-risk-roles")
 def get_high_risk_roles():
     data = supabase.from_('job_risk').select("job_title, automation_probability").gt("automation_probability", 0.7).execute()
@@ -406,8 +412,3 @@ def get_training_effectiveness():
     effectiveness['certification_earned'] = effectiveness['certification_earned'].apply(lambda x: "Success" if x else "Failure")
     # Convert back to list of dictionaries  
     return data.data
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-
