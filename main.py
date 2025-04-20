@@ -389,9 +389,7 @@ async def reasoning_query(request: ReasoningRequest):
 async def health_check():
     return {"status": "healthy", "version": "1.0.0"}
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+
 @app.get("/high-risk-roles")
 def get_high_risk_roles():
     data = supabase.from_('job_risk').select("job_title, automation_probability").gt("automation_probability", 0.7).execute()
@@ -412,3 +410,8 @@ def get_training_effectiveness():
     effectiveness['certification_earned'] = effectiveness['certification_earned'].apply(lambda x: "Success" if x else "Failure")
     # Convert back to list of dictionaries  
     return data.data
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
